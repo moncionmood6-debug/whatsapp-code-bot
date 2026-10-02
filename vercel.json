@@ -1,0 +1,15 @@
+{
+  "buildCommand": "npm install",
+  "public": "public",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "API_KEY": "@api_key",
+    "API_SECRET": "@api_secret"
+  }
+}

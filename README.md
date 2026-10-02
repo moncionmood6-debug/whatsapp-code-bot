@@ -1,96 +1,87 @@
-const API_KEY = "49bd13bd";
-const API_SECRET = "DliY4fiDOrvBBCDo";
+# Bot WhatsApp - Déploiement Public 🚀
 
-async function apiRequest(url, options = {}) {
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": API_KEY,
-      "x-api-secret": API_SECRET,
-      ...(options.headers || {})
-    }
-  });
+Bot WhatsApp pour envoyer des codes depuis une interface web avec Node.js + Express.
 
-  return response.json();
-}
+## Déploiement rapide
 
-async function loadCodes() {
-  const tbody = document.getElementById("codeTableBody");
-  const result = await apiRequest("/api/codes");
+### Option 1 : Render (Recommandé) ⭐
 
-  if (!Array.isArray(result)) {
-    tbody.innerHTML = `<tr><td colspan="3">${result.error || "Erreur"}</td></tr>`;
-    return;
-  }
+1. Allez sur https://render.com
+2. Cliquez sur "New +" → "Web Service"
+3. Connectez votre GitHub et sélectionnez ce repo
+4. Configurez :
+   - **Name** : whatsapp-code-bot
+   - **Environment** : Node
+   - **Build Command** : `npm install`
+   - **Start Command** : `npm start`
+5. Ajoutez les variables d'environnement :
+   ```
+   PORT=3000
+   API_KEY=49bd13bd
+   API_SECRET=DliY4fiDOrvBBCDo
+   ```
+6. Cliquez "Create Web Service"
 
-  tbody.innerHTML = result
-    .map(
-      (item) => `
-        <tr>
-          <td>${item.id}</td>
-          <td>${item.code}</td>
-          <td>${item.number}</td>
-        </tr>
-      `
-    )
-    .join("");
-}
+Votre site sera accessible à : `https://whatsapp-code-bot.onrender.com`
 
-async function addCode() {
-  const code = document.getElementById("codeInput").value.trim();
-  const number = document.getElementById("numberInput").value.trim();
+### Option 2 : Railway
 
-  if (!code || !number) {
-    alert("Veuillez remplir le code et le numéro.");
-    return;
-  }
+```bash
+npm install -g @railway/cli
+railway login
+cd whatsapp-code-bot
+railway init
+railway up
+```
 
-  const result = await apiRequest("/api/add-code", {
-    method: "POST",
-    body: JSON.stringify({ code, number })
-  });
+### Option 3 : Heroku
 
-  alert(result.message || result.error || "Erreur");
-  document.getElementById("codeInput").value = "";
-  document.getElementById("numberInput").value = "";
-  loadCodes();
-}
+```bash
+npm install -g heroku
+heroku login
+heroku create whatsapp-code-bot
+git push heroku main
+```
 
-async function sendCode() {
-  const code = document.getElementById("sendCodeInput").value.trim();
-  const number = document.getElementById("sendNumberInput").value.trim();
-  const repeatCount = document.getElementById("repeatInput").value || 1;
+## Utilisation
 
-  if (!code || !number) {
-    alert("Veuillez remplir le code et le numéro à envoyer.");
-    return;
-  }
+1. Ouvrez le lien du site déployé
+2. Entrez le mot de passe : `Barry-MD`
+3. Scannez le QR code WhatsApp
+4. Ajoutez des codes
+5. Envoyez-les à un numéro WhatsApp
 
-  const result = await apiRequest("/api/send-code", {
-    method: "POST",
-    body: JSON.stringify({ code, number, repeatCount })
-  });
+## API Keys
 
-  alert(result.message || result.error || "Erreur");
-}
+- API Key : `49bd13bd`
+- API Secret : `DliY4fiDOrvBBCDo`
+- Mot de passe site : `Barry-MD`
 
-async function loadQr() {
-  const image = document.getElementById("qrImage");
-  const result = await fetch("/api/qr");
-  const data = await result.json();
+## Fonctionnalités
 
-  if (data.qr) {
-    image.src = data.qr;
-  } else {
-    image.src = "";
-    image.alt = "QR non disponible";
-  }
-}
+✅ Interface web rouge moderne
+✅ Authentification par mot de passe
+✅ Base de données SQLite
+✅ Envoi de codes via WhatsApp
+✅ Historique des envois
+✅ QR Code WhatsApp Web
+✅ API sécurisée
 
-document.getElementById("addCodeBtn").addEventListener("click", addCode);
-document.getElementById("sendBtn").addEventListener("click", sendCode);
-document.getElementById("refreshQrBtn").addEventListener("click", loadQr);
+## Commandes Locales
 
-loadCodes();
-loadQr();
+```bash
+git clone https://github.com/moncionmood6-debug/whatsapp-code-bot.git
+cd whatsapp-code-bot
+npm install
+npm start
+```
+
+Puis ouvrez : `http://localhost:3000`
+
+## Support
+
+Pour des questions ou bugs, créez une issue sur GitHub.
+
+## Licence
+
+MIT

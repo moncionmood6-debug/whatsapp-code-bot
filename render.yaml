@@ -1,0 +1,16 @@
+// render.yaml - Configuration pour Render
+services:
+  - type: web
+    name: whatsapp-code-bot
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: API_KEY
+        value: 49bd13bd
+      - key: API_SECRET
+        value: DliY4fiDOrvBBCDo
+      - key: NODE_ENV
+        value: production
