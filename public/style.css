@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bot Codes WhatsApp</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>Bot WhatsApp Codes</h1>
+      </header>
+
+      <main class="grid">
+        <section class="card">
+          <h2>Ajouter un code</h2>
+          <input id="codeInput" type="text" placeholder="Ex: 123456" />
+          <input id="numberInput" type="text" placeholder="Numéro WhatsApp" />
+          <button id="addCodeBtn">Enregistrer</button>
+        </section>
+
+        <section class="card">
+          <h2>Envoyer le code</h2>
+          <input id="sendCodeInput" type="text" placeholder="Code à envoyer" />
+          <input id="sendNumberInput" type="text" placeholder="Numéro du destinataire" />
+          <input id="repeatInput" type="number" min="1" value="1" placeholder="Nombre de fois" />
+          <button id="sendBtn">Envoyer</button>
+        </section>
+
+        <section class="card full">
+          <h2>QR Code WhatsApp</h2>
+          <div class="qr-box">
+            <img id="qrImage" alt="QR code WhatsApp" />
+          </div>
+          <button id="refreshQrBtn">Actualiser le QR</button>
+        </section>
+      </main>
+
+      <section class="card">
+        <h2>Codes enregistrés</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Code</th>
+                <th>Numéro</th>
+              </tr>
+            </thead>
+            <tbody id="codeTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

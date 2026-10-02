@@ -1,0 +1,16 @@
+{
+  "name": "whatsapp-code-bot",
+  "version": "1.0.0",
+  "description": "Bot WhatsApp pour envoyer des codes via interface web",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "qrcode": "^1.0.0",
+    "sqlite3": "^5.1.1",
+    "whatsapp-web.js": "^1.25.0"
+  }
+}

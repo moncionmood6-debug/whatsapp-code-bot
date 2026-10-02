@@ -1,0 +1,83 @@
+# whatsapp-code-bot
+
+Bot WhatsApp pour envoyer des codes depuis une interface web simple avec Node.js + Express, SQLite et WhatsApp Web.js.
+
+## Fonctionnalités
+- Ajouter un code enregistré dans la base SQLite
+- Saisir un numéro WhatsApp
+- Envoyer le code plusieurs fois selon le nombre choisi
+- API sécurisée avec API key + API secret
+- Interface rouge moderne
+- Compatibilité Termux
+
+## Prérequis
+- Termux (Android)
+- Node.js
+- Chromium / Chrome installé
+
+## Installation sur Termux
+
+```bash
+pkg update -y
+pkg upgrade -y
+pkg install -y git nodejs npm python
+pkg install -y chromium
+
+git clone https://github.com/moncionmood6-debug/whatsapp-code-bot.git
+cd whatsapp-code-bot
+npm install
+cp .env.example .env
+```
+
+## Configuration
+Modifiez le fichier `.env` si vous voulez remplacer les valeurs par défaut :
+
+```env
+PORT=3000
+API_KEY=49bd13bd
+API_SECRET=DliY4fiDOrvBBCDo
+```
+
+## Lancer le projet
+
+```bash
+npm start
+```
+
+Puis ouvrez :
+
+```text
+http://localhost:3000
+```
+
+## Utilisation
+1. Scanner le QR code de WhatsApp
+2. Ajouter un code dans le formulaire
+3. Saisir le numéro
+4. Choisir le nombre de répétitions
+5. Cliquer sur "Envoyer le code"
+
+## API
+### Ajouter un code
+```bash
+curl -X POST http://localhost:3000/api/add-code \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: 49bd13bd" \
+  -H "x-api-secret: DliY4fiDOrvBBCDo" \
+  -d '{"code":"123456","number":"22890000000"}'
+```
+
+### Envoyer un code
+```bash
+curl -X POST http://localhost:3000/api/send-code \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: 49bd13bd" \
+  -H "x-api-secret: DliY4fiDOrvBBCDo" \
+  -d '{"code":"123456","number":"22890000000","repeatCount":3}'
+```
+
+## Important
+WhatsApp Web.js est conçu pour le développement/test. Pour une utilisation professionnelle, il est conseillé d'utiliser l'API WhatsApp Business officielle.
+
+## Licence
+MIT
