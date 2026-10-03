@@ -7,53 +7,77 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="container">
-      <header class="header">
+    <div id="loginContainer" class="login-container">
+      <div class="login-card">
         <h1>Bot WhatsApp Codes</h1>
-      </header>
+        <p>Entrez le mot de passe pour accéder</p>
+        <input id="passwordInput" type="password" placeholder="Mot de passe" />
+        <button id="loginBtn">Se connecter</button>
+        <div id="loginError" class="error-message"></div>
+      </div>
+    </div>
 
-      <main class="grid">
-        <section class="card">
-          <h2>Ajouter un code</h2>
-          <input id="codeInput" type="text" placeholder="Ex: 123456" />
-          <input id="numberInput" type="text" placeholder="Numéro WhatsApp" />
-          <button id="addCodeBtn">Enregistrer</button>
-        </section>
-
-        <section class="card">
-          <h2>Envoyer le code</h2>
-          <input id="sendCodeInput" type="text" placeholder="Code à envoyer" />
-          <input id="sendNumberInput" type="text" placeholder="Numéro du destinataire" />
-          <input id="repeatInput" type="number" min="1" value="1" placeholder="Nombre de fois" />
-          <button id="sendBtn">Envoyer</button>
-        </section>
-
-        <section class="card full">
-          <h2>QR Code WhatsApp</h2>
-          <div class="qr-box">
-            <img id="qrImage" alt="QR code WhatsApp" />
+    <div id="appContainer" class="app-container" style="display: none;">
+      <div class="container">
+        <header class="header">
+          <div class="header-top">
+            <h1>Bot WhatsApp Codes</h1>
+            <button id="logoutBtn" class="logout-btn">Déconnexion</button>
           </div>
-          <button id="refreshQrBtn">Actualiser le QR</button>
-        </section>
-      </main>
+        </header>
 
-      <section class="card">
-        <h2>Codes enregistrés</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Code</th>
-                <th>Numéro</th>
-              </tr>
-            </thead>
-            <tbody id="codeTableBody"></tbody>
-          </table>
-        </div>
-      </section>
+        <main class="grid">
+          <section class="card">
+            <h2>Générer et envoyer le code</h2>
+            <input id="targetNumberInput" type="text" placeholder="Numéro WhatsApp" />
+            <input id="repeatInput" type="number" min="1" value="1" placeholder="Nombre de fois" />
+            <input id="delayInput" type="number" min="3" step="1" value="3" placeholder="Délai en secondes" />
+            <button id="generateBtn">Générer et Envoyer</button>
+          </section>
+
+          <section class="card full">
+            <h2>QR Code WhatsApp</h2>
+            <div class="qr-box">
+              <img id="qrImage" alt="QR code WhatsApp" />
+            </div>
+            <button id="refreshQrBtn">Actualiser le QR</button>
+          </section>
+        </main>
+
+        <section class="card">
+          <h2>Historique des codes</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Code</th>
+                  <th>Numéro</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="codeTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
     </div>
 
     <script src="app.js"></script>
   </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

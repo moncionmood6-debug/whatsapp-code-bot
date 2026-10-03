@@ -1,75 +1,284 @@
-<!DOCTYPE html>
-<html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bot Codes WhatsApp</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div id="loginContainer" class="login-container">
-      <div class="login-card">
-        <h1>Bot WhatsApp Codes</h1>
-        <p>Entrez le mot de passe pour accéder</p>
-        <input id="passwordInput" type="password" placeholder="Mot de passe" />
-        <button id="loginBtn">Se connecter</button>
-        <div id="loginError" class="error-message"></div>
-      </div>
-    </div>
+const express = require("express");
+const path = require("path");
+const sqlite3 = require("sqlite3").verbose();
+const { Client, LocalAuth } = require("whatsapp-web.js");
+const QRCode = require("qrcode");
+const crypto = require("crypto");
+require("dotenv").config();
 
-    <div id="appContainer" class="app-container" style="display: none;">
-      <div class="container">
-        <header class="header">
-          <div class="header-top">
-            <h1>Bot WhatsApp Codes</h1>
-            <button id="logoutBtn" class="logout-btn">Déconnexion</button>
-          </div>
-        </header>
+const app = express();
+const PORT = process.env.PORT || 3000;
+const API_KEY = process.env.API_KEY || "49bd13bd";
+const API_SECRET = process.env.API_SECRET || "DliY4fiDOrvBBCDo";
+const SITE_PASSWORD = "Barry-MD";
+const SEND_INTERVAL_MS = 3000;
 
-        <main class="grid">
-          <section class="card">
-            <h2>Ajouter un code</h2>
-            <input id="codeInput" type="text" placeholder="Ex: 123456" />
-            <input id="numberInput" type="text" placeholder="Numéro WhatsApp" />
-            <button id="addCodeBtn">Enregistrer</button>
-          </section>
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
 
-          <section class="card">
-            <h2>Envoyer le code</h2>
-            <input id="sendCodeInput" type="text" placeholder="Code à envoyer" />
-            <input id="sendNumberInput" type="text" placeholder="Numéro du destinataire" />
-            <input id="repeatInput" type="number" min="1" value="1" placeholder="Nombre de fois" />
-            <button id="sendBtn">Envoyer</button>
-          </section>
+const db = new sqlite3.Database("bot.db");
 
-          <section class="card full">
-            <h2>QR Code WhatsApp</h2>
-            <div class="qr-box">
-              <img id="qrImage" alt="QR code WhatsApp" />
-            </div>
-            <button id="refreshQrBtn">Actualiser le QR</button>
-          </section>
-        </main>
+function initDatabase() {
+  db.serialize(() => {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS codes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT NOT NULL,
+        number TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
 
-        <section class="card">
-          <h2>Codes enregistrés</h2>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Code</th>
-                  <th>Numéro</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody id="codeTableBody"></tbody>
-            </table>
-          </div>
-        </section>
-      </div>
-    </div>
+    db.run(`
+      CREATE TABLE IF NOT EXISTS sent_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT NOT NULL,
+        number TEXT NOT NULL,
+        repeat_count INTEGER DEFAULT 1,
+        sent_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+  });
+}
 
-    <script src="app.js"></script>
-  </body>
-</html>
+function normalizePhone(number) {
+  if (!number) return "";
+  const cleaned = number.toString().replace(/\D/g, "");
+  if (!cleaned) return "";
+  return `${cleaned}@c.us`;
+}
+
+app.post("/api/login", (req, res) => {
+  const { password } = req.body;
+
+  if (password !== SITE_PASSWORD) {
+    return res.status(401).json({ error: "Mot de passe incorrect" });
+  }
+
+  const token = crypto.randomBytes(32).toString("hex");
+  global.sessions = global.sessions || {};
+  global.sessions[token] = Date.now() + 24 * 60 * 60 * 1000;
+
+  return res.json({ success: true, token, message: "Authentification réussie" });
+});
+
+function checkSession(req, res, next) {
+  const token = req.headers["x-token"] || req.body.token || req.query.token;
+  global.sessions = global.sessions || {};
+
+  if (!token || !global.sessions[token] || global.sessions[token] < Date.now()) {
+    return res.status(401).json({ error: "Session expirée ou invalide" });
+  }
+
+  next();
+}
+
+function validateApi(req, res, next) {
+  const key = req.headers["x-api-key"];
+  const secret = req.headers["x-api-secret"];
+
+  if (!key || !secret || key !== API_KEY || secret !== API_SECRET) {
+    return res.status(401).json({ error: "Accès API refusé" });
+  }
+
+  next();
+}
+
+async function generateAndSendCodes(number, repeatCount = 1, intervalMs = SEND_INTERVAL_MS) {
+  const client = global.whatsappClient;
+  if (!client) {
+    throw new Error("Le client WhatsApp n'est pas connecté.");
+  }
+
+  const repeatTimes = Number(repeatCount) || 1;
+  const target = normalizePhone(number);
+
+  if (!target) {
+    throw new Error("Le numéro est invalide.");
+  }
+
+  const generatedCodes = [];
+
+  for (let i = 0; i < repeatTimes; i++) {
+    const code = Math.floor(Math.random() * 101);
+    generatedCodes.push(code);
+
+    if (i > 0) {
+      await new Promise((resolve) => setTimeout(resolve, Number(intervalMs || SEND_INTERVAL_MS)));
+    }
+
+    await client.sendMessage(target, `Votre code est : ${code}`);
+
+    db.run(
+      "INSERT INTO sent_logs (code, number, repeat_count) VALUES (?, ?, ?)",
+      [String(code), String(number).trim(), repeatTimes]
+    );
+
+    db.run(
+      "INSERT INTO codes (code, number) VALUES (?, ?)",
+      [String(code), String(number).trim()]
+    );
+  }
+
+  return {
+    success: true,
+    codes: generatedCodes,
+    number,
+    repeatCount: repeatTimes,
+    intervalMs: Number(intervalMs || SEND_INTERVAL_MS)
+  };
+}
+
+app.post("/api/generate-and-send", checkSession, async (req, res) => {
+  const { number, repeatCount = 1, intervalMs = SEND_INTERVAL_MS } = req.body;
+
+  if (!number) {
+    return res.status(400).json({ error: "Le numéro est requis." });
+  }
+
+  try {
+    const result = await generateAndSendCodes(number, repeatCount, intervalMs);
+    return res.json({
+      success: true,
+      message: `Code(s) envoyé(s) avec succès à ${number}.`,
+      ...result
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      error: error.message || "Échec lors de l'envoi du code."
+    });
+  }
+});
+
+app.post("/api/add-code", checkSession, async (req, res) => {
+  const { code, number } = req.body;
+
+  if (!code || !number) {
+    return res.status(400).json({ error: "Le code et le numéro sont requis." });
+  }
+
+  db.run(
+    "INSERT INTO codes (code, number) VALUES (?, ?)",
+    [String(code).trim(), String(number).trim()],
+    function (err) {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Erreur lors de l'ajout du code." });
+      }
+
+      return res.json({ success: true, message: "Code ajouté avec succès.", id: this.lastID });
+    }
+  );
+});
+
+app.get("/api/codes", checkSession, async (req, res) => {
+  db.all("SELECT * FROM codes ORDER BY id DESC", (err, rows) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Erreur de lecture des codes." });
+    }
+
+    return res.json(rows);
+  });
+});
+
+app.get("/api/qr", checkSession, (req, res) => {
+  if (global.qrCode) {
+    return res.json({ qr: global.qrCode });
+  }
+
+  return res.json({ qr: null, message: "QR non encore généré." });
+});
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+const client = new Client({
+  authStrategy: new LocalAuth({ dataPath: "./session" }),
+  puppeteer: {
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+  }
+});
+
+client.on("qr", async (qr) => {
+  const qrDataUrl = await QRCode.toDataURL(qr);
+  global.qrCode = qrDataUrl;
+  console.log("Scannez ce QR code dans WhatsApp Web.");
+});
+
+client.on("ready", () => {
+  console.log("WhatsApp connecté avec succès.");
+  global.whatsappClient = client;
+});
+
+client.on("auth_failure", (message) => {
+  console.error("Échec d'authentification :", message);
+});
+
+client.on("disconnected", (reason) => {
+  console.log("Déconnecté de WhatsApp :", reason);
+});
+
+client.initialize();
+initDatabase();
+
+app.listen(PORT, () => {
+  console.log(`Serveur lancé sur http://localhost:${PORT}`);
+});
+
+
+
+
+
+
+
+""""""""""""""""""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
